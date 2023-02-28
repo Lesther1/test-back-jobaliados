@@ -1,10 +1,11 @@
 const { httpError } = require('../helpers/handleError')
 const { encrypt, compare} = require('../helpers/handleBcrypt')
+const { tokenSign } = require('../helpers/generateToken')
 const userModel = require('../models/user')
 
 const loginCtrl = async (req, res) => {
   try {
-      const { username, pass, status } = req.body
+      const { username, pass} = req.body
 
       const user = await userModel.findOne({ username })
 
@@ -21,6 +22,17 @@ const loginCtrl = async (req, res) => {
       }
 
       const checkPassword = await compare(pass, user.pass)
+
+      const tokenSession = await tokenSign(user)
+
+      if (checkPassword) {
+          res.send({
+              data: user,
+              tokenSession
+          })
+          return
+      }
+
 
       if (checkPassword) {
           // Si la contraseña es correcta, restablecer el contador de intentos fallidos
